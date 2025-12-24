@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Happiest Birthday Shree</title>
+  <style>
+    :root{
+      --bg1:#ffdde1; --bg2:#ffe4e9; --bg3:#fff0f5;
+      --accent1:#ff6f91; --accent2:#ff9671; --accent3:#ffc75f;
+      --text:#4a0033;
+    }
+
+    html,body{
+      height:100%;
+      margin:0;
+      font-family: Inter, "Segoe UI", system-ui, -apple-system, "Segoe UI Emoji", "Noto Color Emoji";
+      background: linear-gradient(135deg,var(--bg1),var(--bg2),var(--bg3));
+      color:var(--text);
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+      overflow:auto;
+    }
+
+    /* Floating hearts */
+    .heart{position:absolute;width:18px;height:18px;transform:rotate(45deg);opacity:0.95;filter:drop-shadow(0 0 8px rgba(255,105,180,0.7));pointer-events:none;border-radius:4px;}
+    .heart::before,.heart::after{content:'';position:absolute;border-radius:50%;}
+    .heart::before{width:18px;height:18px;top:-9px;left:0}
+    .heart::after{width:18px;height:18px;left:9px;top:0}
+    @keyframes float {0% { transform: translateY(100vh) rotate(45deg); opacity: 0; } 30% { opacity: 1; } 100% { transform: translateY(-10vh) rotate(45deg); opacity: 0; }}
+
+    /* Banner */
+    .banner{
+      margin:28px auto 18px;
+      width:fit-content;
+      padding:16px 32px;
+      border-radius:18px;
+      color:#fff;
+      font-size:36px;
+      font-weight:800;
+      text-align:center;
+      background:linear-gradient(90deg,var(--accent1),var(--accent2),var(--accent3));
+      box-shadow:0 18px 40px rgba(0,0,0,0.14);
+      animation:bannerGlow 3s infinite alternate;
+      z-index:3;
+      position:relative;
+    }
+    @keyframes bannerGlow{from{box-shadow:0 0 18px rgba(255,111,145,0.5)} to{box-shadow:0 0 36px rgba(255,199,95,0.45)}}
+
+    /* Layout */
+    .stage{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;min-height:72vh;padding:12px 20px 40px;box-sizing:border-box;gap:18px;}
+    .container{display:flex;gap:28px;align-items:center;justify-content:center;flex-wrap:wrap;}
+
+    /* Boxes (kept original look and internal text style) */
+    .box{
+      width:220px;height:220px;border-radius:18px;background:var(--accent1);color:#fff;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;
+      box-shadow:0 14px 30px rgba(0,0,0,0.14);cursor:pointer;position:relative;perspective:900px;transform-origin:center center;
+      opacity:0; transform:translateY(12px) scale(.96);
+      transition:transform .45s cubic-bezier(.2,.9,.2,1), background .35s ease;
+    }
+    .box:hover{transform:translateY(6px) scale(1.03);background:var(--accent2)}
+    .box-inner{position:relative;z-index:2;pointer-events:none;transition:transform .6s cubic-bezier(.2,.9,.2,1), opacity .45s ease;opacity:0.98}
+    .lid{position:absolute;left:12px;right:12px;top:-18px;height:56px;background:linear-gradient(180deg,#ffdfe8,#ffc1d6);border-radius:12px;transform-origin:top center;transform:translateY(0) rotateX(0deg);box-shadow:0 8px 18px rgba(0,0,0,0.12);z-index:3;transition:transform .9s cubic-bezier(.22,.9,.3,1), opacity .6s ease;display:block;pointer-events:none;}
+    .ribbon{position:absolute;left:50%;transform:translateX(-50%);top:40%;width:60%;height:8px;background:rgba(255,255,255,0.18);border-radius:6px;z-index:2;}
+    .box.open .lid{transform:translateY(-10px) rotateX(-60deg);opacity:0.95}
+    .box.open .box-inner{transform:translateY(-14px) scale(1.04);opacity:1;box-shadow:0 18px 40px rgba(255,160,190,0.08)}
+    @keyframes popIn { from{opacity:0; transform:translateY(22px) scale(.96)} to{opacity:1; transform:translateY(0) scale(1)} }
+    .box:nth-child(1){animation:popIn .7s ease .4s forwards}
+    .box:nth-child(2){animation:popIn .7s ease .8s forwards}
+    .box:nth-child(3){animation:popIn .7s ease 1.2s forwards}
+
+    /* Message area (keep the exact font for the provided line) */
+    .message-row{display:flex;align-items:center;gap:18px;flex-wrap:wrap;justify-content:center;width:100%;max-width:980px;padding:18px;box-sizing:border-box;}
+    .message-card{background:linear-gradient(180deg,#fff,#fff6fb);border-radius:14px;padding:18px 22px;box-shadow:0 12px 30px rgba(122,41,91,0.06);min-width:320px;max-width:640px;text-align:center;}
+    .message-text{
+      font-family: 'Segoe UI', cursive; /* keep unchanged as requested */
+      font-size:22px;
+      font-weight:800;
+      color:var(--text);
+      line-height:1.15;
+      letter-spacing:0.2px;
+      margin:0;
+    }
+
+    /* Fullscreen overlay for box messages (soft, elegant animation) */
+    .overlay{
+      position:fixed;
+      inset:0;
+      display:none;
+      align-items:center;
+      justify-content:center;
+      background:linear-gradient(180deg, rgba(255,240,245,0.96), rgba(255,240,245,0.98));
+      z-index:40;
+      padding:40px;
+      box-sizing:border-box;
+      overflow:auto;
+      backdrop-filter: blur(6px) saturate(1.05);
+    }
+    .overlay.show{display:flex;}
+    .overlay-card{
+      width:100%;
+      max-width:1100px;
+      background:linear-gradient(180deg,#fff,#fff7fb);
+      border-radius:18px;
+      padding:36px;
+      box-shadow:0 28px 80px rgba(122,41,91,0.12);
+      transform-origin:center center;
+      animation:overlayIn .48s cubic-bezier(.2,.9,.2,1);
+    }
+    @keyframes overlayIn{
+      from{opacity:0; transform:translateY(18px) scale(.98)}
+      to{opacity:1; transform:translateY(0) scale(1)}
+    }
+    .overlay-text{
+      font-size:22px; /* slightly bigger as requested */
+      color:var(--text);
+      line-height:1.8;
+      white-space:pre-wrap;
+      word-break:break-word;
+    }
+    .overlay-close{
+      position:absolute;
+      top:22px;
+      right:28px;
+      font-size:36px;
+      color:var(--text);
+      cursor:pointer;
+      user-select:none;
+    }
+
+    /* responsive */
+    @media (max-width:900px){
+      .overlay-card{padding:22px}
+      .overlay-text{font-size:20px}
+      .box{width:180px;height:180px;font-size:18px}
+      .message-text{font-size:20px}
+    }
+    @media (max-width:520px){
+      .overlay-text{font-size:18px}
+      .overlay-card{padding:18px}
+      .box{width:150px;height:150px;font-size:16px}
+      .message-text{font-size:18px}
+    }
+  </style>
+</head>
+<body>
+  <script>
+    (function createHearts(){
+      const colors = ['#ff6f91','#ff8fab','#ffc1d6','#ffb3c6','#ffd6e8'];
+      for(let i=0;i<36;i++){
+        const h = document.createElement('div');
+        h.className = 'heart';
+        h.style.left = (Math.random()*100) + 'vw';
+        h.style.top = (Math.random()*100) + 'vh';
+        const size = 10 + Math.random()*20;
+        h.style.width = size + 'px';
+        h.style.height = size + 'px';
+        h.style.animationDuration = (8 + Math.random()*8) + 's';
+        h.style.animationDelay = (Math.random()*4) + 's';
+        const c = colors[Math.floor(Math.random()*colors.length)];
+        h.style.background = c;
+        h.style.setProperty('animation','float ' + (8 + Math.random()*8) + 's linear infinite');
+        document.body.appendChild(h);
+      }
+    })();
+  </script>
+
+  <!-- Optional background music (starts after first interaction) -->
+  <audio id="bgm" loop preload="auto">
+    <source src="happy_birthday_peaceful.mp3" type="audio/mpeg">
+    <source src="happy_birthday_peaceful.ogg" type="audio/ogg">
+  </audio>
+
+  <div class="banner">🎉 Happiest Birthday Shree 🎂💖✨</div>
+
+  <div class="stage">
+    <div class="container" role="list">
+      <div class="box" role="listitem" id="box1" data-index="1" onclick="openBox(1)">
+        <div class="lid" aria-hidden="true"></div>
+        <div class="ribbon" aria-hidden="true"></div>
+        <div class="box-inner">Surprise 1 💝</div>
+      </div>
+
+      <div class="box" role="listitem" id="box2" data-index="2" onclick="openBox(2)">
+        <div class="lid" aria-hidden="true"></div>
+        <div class="ribbon" aria-hidden="true"></div>
+        <div class="box-inner">Surprise 2 🌸</div>
+      </div>
+
+      <div class="box" role="listitem" id="box3" data-index="3" onclick="openBox(3)">
+        <div class="lid" aria-hidden="true"></div>
+        <div class="ribbon" aria-hidden="true"></div>
+        <div class="box-inner">Surprise 3 💙</div>
+      </div>
+    </div>
+
+    <div class="message-row" role="region" aria-label="Birthday message">
+      <div class="message-card" id="messageCard">
+        <p class="message-text">These all messages is for you <span style="color:#ff6f91">Cutieee 💗</span></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Fullscreen overlay for each box (texts exactly as provided, with a few extra emojis) -->
+  <div id="overlay" class="overlay" role="dialog" aria-hidden="true" aria-modal="true">
+    <div class="overlay-close" id="overlayClose" onclick="closeOverlay()">×</div>
+    <div class="overlay-card" id="overlayCard" role="document">
+      <div class="overlay-text" id="overlayText"></div>
+    </div>
+  </div>
+
+  <script>
+    // Start background music on first interaction
+    const bgm = document.getElementById('bgm');
+    let musicStarted = false;
+    function startMusic() {
+      if (musicStarted) return;
+      musicStarted = true;
+      try {
+        bgm.volume = 0.0;
+        const playPromise = bgm.play();
+        if (playPromise !== undefined) {
+          playPromise.then(() => {
+            let vol = 0.0;
+            const fade = setInterval(() => {
+              vol += 0.04;
+              if (vol >= 0.6) { vol = 0.6; clearInterval(fade); }
+              bgm.volume = vol;
+            }, 120);
+          }).catch(()=>{ /* play blocked or failed; will try again on next interaction */ });
+        }
+      } catch(e){}
+    }
+    document.addEventListener('click', startMusic, { once: true, passive: true });
+    document.addEventListener('touchstart', startMusic, { once: true, passive: true });
+
+    // Texts for each box (kept verbatim, with a few tasteful extra emojis added)
+    const BOX_TEXTS = {
+      1: `Happy Birthday to the most amazing soul I know! 🌸🎉
+From the moment we met, you’ve filled my life with laughter, warmth, and a kind of joy that words can barely capture. You’re not just my best friend—you’re my confidant, my sunshine on cloudy days, and the person who makes every ordinary moment feel magical. I hope today surrounds you with the love, happiness, and sparkle you so freely give to everyone around you. ✨
+May this year bring endless adventures, unforgettable memories, and all the dreams your heart has been wishing for. You are my heart’s sweetest treasure! Loveee youu Shreee 💗`,
+
+      2: `Some people come into our lives and quietly change everything, and you are one of those rare souls. 🌟
+Your laughter lingers like a favorite melody, and your presence turns ordinary moments into memories I’ll always cherish. I hope you always chase the dreams that make your heart race and find beauty in the smallest of things. You inspire me in ways I can’t even put into words, and I feel so lucky to share this journey with you. Keep shining, keep smiling, and never forget how deeply you are loved (specially by me 😉) 💖`,
+
+      3: `This year may be my last one in school, and so many things around us will change, but one thing never will—my care for you. 🌿
+No matter where life takes us, I’ll always be here for you, in every high and every low, in every calm and every storm. You’ll NEVER EVER have to face anything alone or feel lost in moments that don’t make sense. Just remember this, YOU have ME. And as long as I’m here, you’ll always have someone who believes in you, protects your peace, and stands by you no matter what. 🌿💙
+no one has the ability to tense you until I'm with you 💫`
+    };
+
+    // Soft, elegant lid open + overlay show
+    function openBox(n){
+      const box = document.getElementById('box' + n);
+      if(!box) return;
+      // animate lid open softly
+      box.classList.add('open');
+      // small delay to let lid animation feel elegant, then show full-screen text
+      setTimeout(()=> showOverlay(n), 650);
+    }
+
+    function showOverlay(n){
+      const overlay = document.getElementById('overlay');
+      const overlayText = document.getElementById('overlayText');
+      overlayText.textContent = BOX_TEXTS[n] || '';
+      overlay.classList.add('show');
+      overlay.setAttribute('aria-hidden','false');
+      // lock scroll behind overlay
+      document.documentElement.style.overflow = 'hidden';
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeOverlay(){
+      const overlay = document.getElementById('overlay');
+      overlay.classList.remove('show');
+      overlay.setAttribute('aria-hidden','true');
+      document.documentElement.style.overflow = '';
+      document.body.style.overflow = '';
+      // reset lids after closing
+      for(let i=1;i<=3;i++){
+        const b = document.getElementById('box'+i);
+        if(b) b.classList.remove('open');
+      }
+    }
+
+    // Close overlay on Escape
+    document.addEventListener('keydown', (e)=>{
+      if(e.key === 'Escape'){
+        closeOverlay();
+      }
+    });
+
+    // Close overlay when clicking outside the card
+    document.getElementById('overlay').addEventListener('click', function(e){
+      if(e.target === this) closeOverlay();
+    });
+
+    // Prevent accidental text selection on double-click and reset lids
+    document.addEventListener('dblclick', (e)=>{
+      e.preventDefault();
+      for(let i=1;i<=3;i++){
+        const b = document.getElementById('box'+i);
+        if(b) b.classList.remove('open');
+      }
+    });
+  </script>
+</body>
+</html>
